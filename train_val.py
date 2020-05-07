@@ -1,54 +1,45 @@
 import glob, os
-import config
+import sys
 
 # ============================== Config ========================================
 
-DATA_PATH 				=  config.PARAMS['annotationDirectory']
-DATA_PATH_TOWRITE       = 'custom/dataset/'			# Directory where the data will reside, relative to 'darknet.exe'
-TEST_PERCENTAGE 		= 20				# Test Image Percentage
-IMAGE_FORMAT    		= config.PARAMS['imageFormat']				# Image Format of your data [jpg / png / jpeg]
+DATA_PATH = './random'
+DATA_PATH_TOWRITE = '/content/gdrive/My Drive/darknet/dataset_configuration_3/dataset/'  # Directory where the data will reside, relative to 'darknet.exe'
+OUTPUT_PATH = './garbage'
+TEST_PERCENTAGE = 15  # Test Image Percentage
+IMAGE_FORMAT = ['jpg', 'png', 'jpeg', 'txt']  # Image Format of your data [jpg / png / jpeg]
 
 # ============================== Config ========================================
 
-def process():
-    total_images = 0
+
+def separate_train_val():
+    images = 0
+    txt_files = 0
     file_train = open('train.txt', 'w')
     file_test = open('val.txt', 'w')
 
-    # Populate train.txt and test.txt
     counter = 1
     index_test = round(100 / TEST_PERCENTAGE)
 
     for format in IMAGE_FORMAT:
         for pathAndFilename in glob.iglob(os.path.join(DATA_PATH, str("*." + format))):
-
             basename = os.path.basename(pathAndFilename)
 
-            if counter == index_test:
-                counter = 1
-                file_test.write(DATA_PATH_TOWRITE + basename + "\n")
+            if basename.split('.')[1] != 'txt':
+                if counter == index_test:
+                    counter = 1
+                    file_test.write(DATA_PATH_TOWRITE + basename + "\n")
+                else:
+                    file_train.write(DATA_PATH_TOWRITE + basename + "\n")
+                    counter = counter + 1
+                images += 1
             else:
-                file_train.write(DATA_PATH_TOWRITE + basename + "\n")
-                counter = counter + 1
-            total_images += 1
+                txt_files += 1
 
-    print('All images Present : ' + str(total_images))
-    return
+    lines_train = open('train.txt', 'r').read().split("\n")
+    lines_test = open('val.txt', 'r').read().split("\n")
 
-
-def check_files():
-
-	# Read train.txt and test.txt
-	file_train = open('train.txt', 'r')
-	file_test = open('val.txt', 'r')
-
-	lines_train = file_train.read().split("\n")
-	lines_test = file_test.read().split("\n")
-
-	print('Train images : %s' % (len(lines_train) - 1))
-	print('Test images : %s' % (len(lines_test) - 1))
-
-if __name__ == "__main__":
-
-	process()
-	check_files()
+    print('All images present : ' + str(images))
+    print('All txt files present : ' + str(txt_files))
+    print('Training images separated: %s' % (len(lines_train) - 1))
+    print('Validation images separated: %s' % (len(lines_test) - 1))
